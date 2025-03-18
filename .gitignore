@@ -3,3 +3,4 @@ results/checkpoint-114/config.json
 results/checkpoint-114/generation_config.json
 *.safetensors
 results/checkpoint-114/optimizer.pt
+results/checkpoint-266/optimizer.pt
