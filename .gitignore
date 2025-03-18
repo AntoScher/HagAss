@@ -1,0 +1,5 @@
+pharmacy_gpt/model.safetensors
+results/checkpoint-114/config.json
+results/checkpoint-114/generation_config.json
+*.safetensors
+results/checkpoint-114/optimizer.pt

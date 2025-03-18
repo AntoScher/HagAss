@@ -53,7 +53,10 @@ dataset = PharmacyDataset(
     file_path="D:/DEV/HagAss/pharmacy_data.json",
     tokenizer=tokenizer
 )
-
+data_collator = DataCollatorForLanguageModeling(
+    tokenizer=tokenizer,
+    mlm=False  # Для CausalLM задачи
+)
 # 5. Разделение данных
 train_size = int(0.9 * len(dataset))
 train_dataset = Subset(dataset, range(train_size))
@@ -64,10 +67,10 @@ training_args = TrainingArguments(
     output_dir="./results",
     per_device_train_batch_size=2,
     per_device_eval_batch_size=2,
-    num_train_epochs=3,
+    num_train_epochs=7,
     logging_dir="./logs",
     save_steps=500,
-    evaluation_strategy="steps",
+    eval_strategy="steps",  # Было evaluation_strategy
     eval_steps=500,
     logging_steps=100,
 )
@@ -93,22 +96,27 @@ trainer.train()
 def generate_response(user_input):
     inputs = tokenizer.encode(
         user_input + tokenizer.eos_token,
-        return_tensors="pt"
+        return_tensors="pt",
+        padding='max_length',  # Добавлено
+        max_length=512,  # Добавлено
+        truncation=True  # Добавлено
     ).to(device)  # Добавлено перемещение на устройство
 
     outputs = model.generate(
-        inputs,
+        input_ids=inputs['input_ids'],
+        attention_mask=inputs['attention_mask'],  # Ключевое изменение
         max_length=500,
         pad_token_id=tokenizer.eos_token_id,
         no_repeat_ngram_size=3,
         do_sample=True,
-        top_k=50,
+        top_k=82,
         top_p=0.85,
-        temperature=0.7
+        temperature=0.7,
+        repetition_penalty=1.2  # Штраф за повторения
     )
 
-    return tokenizer.decode(outputs[:, inputs.shape[-1]:][0], skip_special_tokens=True)
-
+    #return tokenizer.decode(outputs[:, inputs.shape[-1]:][0], skip_special_tokens=True)
+    return tokenizer.decode(outputs[:, inputs['input_ids'].shape[-1]:][0], skip_special_tokens=True)
 
 def process_input(text):
     emergency_keywords = ["скорая", "умираю", "кровь", "потерял сознание"]
